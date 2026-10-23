@@ -1,0 +1,321 @@
+<title>Hướng dẫn máy RTX 3090</title>
+<meta name="description" content="Hướng dẫn sinh viên dùng máy RTX 3090 để train mô hình nhận dạng giọng nói tiếng Thái (MMS) và chuẩn bị dự án TrOCR.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#f4f7f6; --surface:#ffffff; --ink:#18262d; --muted:#53656c; --line:#d5dfdc;
+  --accent:#0d6b5b; --accent-soft:#e1f0ec; --code:#e8efed; --code-ink:#173029;
+  --warn:#9a5a00; --warn-soft:#fbf0dc; --stop:#a3302a; --stop-soft:#f8e4e2;
+  --sans:"Be Vietnam Pro", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#10181b; --surface:#162125; --ink:#e2ebe8; --muted:#9db0ab; --line:#2a3a3e;
+    --accent:#56c2a6; --accent-soft:#163731; --code:#1b2a2e; --code-ink:#cfe6df;
+    --warn:#e7b25a; --warn-soft:#33270f; --stop:#ef8a82; --stop-soft:#3a1c1a; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10181b; --surface:#162125; --ink:#e2ebe8; --muted:#9db0ab; --line:#2a3a3e;
+  --accent:#56c2a6; --accent-soft:#163731; --code:#1b2a2e; --code-ink:#cfe6df;
+  --warn:#e7b25a; --warn-soft:#33270f; --stop:#ef8a82; --stop-soft:#3a1c1a; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:400 16px/1.65 var(--sans);padding-inline:20px;padding-block:0 64px}
+.wrap{max-width:1080px;margin:0 auto;display:grid;grid-template-columns:220px minmax(0,1fr);gap:48px}
+@media (max-width:860px){.wrap{grid-template-columns:minmax(0,1fr)} nav.toc{display:none}}
+header.top{max-width:1080px;margin:0 auto;padding-block:48px 28px;border-bottom:1px solid var(--line);margin-bottom:36px}
+.eyebrow{font:600 12px/1 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+h1{font:700 clamp(28px,4.4vw,40px)/1.15 var(--sans);margin:.4em 0 .35em;text-wrap:balance}
+.lede{color:var(--muted);max-width:64ch;margin:0}
+.facts{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:18px;font-size:14px;color:var(--muted)}
+.facts b{color:var(--ink);font-weight:600}
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);align-self:start;font-size:14px}
+nav.toc p{font-weight:600;margin:0 0 8px}
+nav.toc ol{list-style:none;padding:0;margin:0;display:grid;gap:4px;counter-reset:t}
+nav.toc a{color:var(--muted);text-decoration:none;display:block;padding:3px 0}
+nav.toc a:hover,nav.toc a:focus-visible{color:var(--accent)}
+main{min-width:0}
+section{margin-bottom:52px}
+h2{font:700 24px/1.25 var(--sans);margin:0 0 14px;text-wrap:balance;scroll-margin-top:24px}
+h2 .n{color:var(--accent);font-variant-numeric:tabular-nums;margin-right:.35em}
+h3{font:600 17px/1.35 var(--sans);margin:26px 0 8px}
+p,li{max-width:68ch}
+ul,ol{padding-left:1.3em}
+li{margin:4px 0}
+a{color:var(--accent)}
+code{font:400 .88em/1.5 var(--mono);background:var(--code);color:var(--code-ink);padding:.1em .35em;border-radius:4px}
+pre{font:400 13.5px/1.6 var(--mono);background:var(--code);color:var(--code-ink);padding:14px 16px;border-radius:8px;overflow-x:auto;margin:10px 0 0;white-space:pre}
+pre code{background:none;padding:0;font-size:inherit}
+.os{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;margin:10px 0}
+.os figure{margin:0;min-width:0}
+.os figcaption{font:600 12px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.os pre{margin:0}
+.note,.rule,.stop{border-radius:8px;padding:12px 16px;margin:14px 0}
+.note{background:var(--accent-soft)}
+.rule{background:var(--warn-soft);border-left:3px solid var(--warn)}
+.stop{background:var(--stop-soft);border-left:3px solid var(--stop)}
+.note p,.rule p,.stop p{margin:.3em 0}
+.rule strong{color:var(--warn)} .stop strong{color:var(--stop)}
+.steps{counter-reset:s;list-style:none;padding:0;display:grid;gap:18px;margin:16px 0}
+.steps>li{counter-increment:s;position:relative;padding-left:44px;max-width:none}
+.steps>li::before{content:counter(s);position:absolute;left:0;top:0;width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--surface);font:700 14px/30px var(--sans);text-align:center}
+.steps>li>b{display:block;font-weight:600;margin-bottom:2px}
+.tbl{overflow-x:auto;margin:12px 0;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{font-weight:600;color:var(--muted);font-size:13px;letter-spacing:.02em;background:var(--bg)}
+td.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+td code{white-space:nowrap}
+.pill{display:inline-block;font:600 12px/1.6 var(--sans);padding:0 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.pill.wait{background:var(--warn-soft);color:var(--warn)}
+footer{max-width:1080px;margin:0 auto;border-top:1px solid var(--line);padding-top:16px;color:var(--muted);font-size:13.5px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+
+<header class="top">
+  <div class="eyebrow">Dự án VietTrans · Máy GPU dùng chung</div>
+  <h1>Hướng dẫn dùng máy RTX 3090</h1>
+  <p class="lede">Cách điều khiển máy RTX 3090 thuê từ MacBook hoặc Windows để tải bộ giọng nói tiếng Thái, train và đánh giá mô hình nhận dạng giọng nói MMS, và chuẩn bị cho dự án nhận dạng chữ TrOCR.</p>
+  <div class="facts">
+    <span><b>Máy:</b> RTX 3090 24 GB, Ubuntu, Python 3.12</span>
+    <span><b>Môi trường:</b> PyTorch 2.11 (CUDA 12.8), transformers 4.57.6</span>
+    <span><b>Dự án:</b> MMS <span class="pill">sẵn sàng</span> · TrOCR <span class="pill wait">chưa có dữ liệu</span></span>
+  </div>
+</header>
+
+<div class="wrap">
+<nav class="toc" aria-label="Mục lục">
+  <p>Mục lục</p>
+  <ol>
+    <li><a href="#quy-tac">Quy tắc dữ liệu</a></li>
+    <li><a href="#chuan-bi">Chuẩn bị một lần</a></li>
+    <li><a href="#may-moi">Cài máy mới</a></li>
+    <li><a href="#mms">Train MMS</a></li>
+    <li><a href="#ket-qua">Đọc kết quả</a></li>
+    <li><a href="#gpu">Kiểm tra GPU</a></li>
+    <li><a href="#tham-so">Tham số hay chỉnh</a></li>
+    <li><a href="#trocr">Dự án TrOCR</a></li>
+    <li><a href="#loi">Lỗi thường gặp</a></li>
+    <li><a href="#bang-lenh">Bảng lệnh</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<section id="quy-tac">
+  <h2><span class="n">1</span>Quy tắc dữ liệu: đọc trước khi làm</h2>
+  <p>Bộ dữ liệu là giọng nói thật của người đóng góp và chữ Thái của cộng đồng. Dự án theo nguyên tắc CARE về dữ liệu của dân tộc thiểu số: cộng đồng giữ quyền với dữ liệu của mình.</p>
+  <div class="stop">
+    <p><strong>Không được:</strong></p>
+    <ul>
+      <li>Sao chép file âm thanh, câu chữ Thái hay bản nhận dạng về máy cá nhân, Google Drive, USB, nhóm chat.</li>
+      <li>Dán câu chữ Thái, bản nhận dạng hay file âm thanh vào ChatGPT, Gemini, Google Dịch hay bất kỳ dịch vụ trực tuyến nào.</li>
+      <li>Chia sẻ mật khẩu tài khoản VietTrans, khoá SSH hay file <code>rtx.conf</code> cho người khác.</li>
+    </ul>
+  </div>
+  <p>Dữ liệu chỉ nằm trên máy RTX. Lệnh <code>mms-fetch</code> chỉ tải về máy bạn <em>mô hình đã train</em> (adapter, khoảng 9 MB) và <em>bảng điểm</em>, không tải âm thanh hay bản nhận dạng. Khi người đóng góp xoá bản ghi của họ trên website, lần tải dữ liệu tiếp theo cũng xoá bản ghi đó trên máy RTX.</p>
+</section>
+
+<section id="chuan-bi">
+  <h2><span class="n">2</span>Chuẩn bị một lần</h2>
+  <ol class="steps">
+    <li><b>Nhận thư mục <code>stt-viettran</code> từ trưởng nhóm</b>
+      Thư mục gồm <code>client/</code> (lệnh chạy trên máy bạn) và <code>server/</code> (script được đưa lên máy RTX). Giữ nguyên cấu trúc này.</li>
+    <li><b>Kiểm tra SSH đã có sẵn</b>
+      macOS có sẵn. Windows 10/11 có sẵn OpenSSH Client; nếu lệnh dưới báo không tìm thấy, vào <i>Settings → Apps → Optional features → OpenSSH Client</i>.
+      <div class="os">
+        <figure><figcaption>macOS · Terminal</figcaption><pre><code>ssh -V</code></pre></figure>
+        <figure><figcaption>Windows · PowerShell</figcaption><pre><code>ssh -V</code></pre></figure>
+      </div></li>
+    <li><b>Tạo khoá SSH và gửi phần công khai cho trưởng nhóm</b>
+      Nhấn Enter để nhận vị trí mặc định. Đặt mật khẩu cho khoá nếu muốn.
+      <div class="os">
+        <figure><figcaption>macOS · Terminal</figcaption><pre><code>ssh-keygen -t ed25519 -C "ten-ban"
+cat ~/.ssh/id_ed25519.pub</code></pre></figure>
+        <figure><figcaption>Windows · PowerShell</figcaption><pre><code>ssh-keygen -t ed25519 -C "ten-ban"
+Get-Content $env:USERPROFILE\.ssh\id_ed25519.pub</code></pre></figure>
+      </div>
+      <p>Chỉ gửi dòng bắt đầu bằng <code>ssh-ed25519</code> (file <code>.pub</code>). <strong>Không bao giờ gửi file không có đuôi <code>.pub</code></strong>: đó là khoá bí mật. Trưởng nhóm thêm khoá của bạn vào máy RTX.</p></li>
+    <li><b>Tạo file <code>rtx.conf</code></b>
+      Trong <code>client/</code>, sao chép <code>rtx.conf.example</code> thành <code>rtx.conf</code> và điền địa chỉ, cổng do trưởng nhóm gửi (dạng <code>ssh -p 51985 root@203.0.113.10</code>):
+      <pre><code>RTX_HOST=root@203.0.113.10
+RTX_PORT=51985
+RTX_KEY=</code></pre>
+      <p>Để trống <code>RTX_KEY</code> nếu dùng khoá mặc định ở bước 3.</p></li>
+    <li><b>Windows: cho phép chạy script PowerShell</b> (chỉ một lần)
+      <pre><code>Set-ExecutionPolicy -Scope CurrentUser RemoteSigned</code></pre></li>
+    <li><b>Xin tài khoản VietTrans có vai trò "Kiểm duyệt giọng nói"</b>
+      Đăng ký tài khoản ở viettrans.info, rồi nhờ quản trị viên gán vai trò <b>Kiểm duyệt giọng nói</b> ở trang <i>Quản lý người dùng</i>. Tài khoản này dùng để tải bộ giọng nói lên máy RTX. Vai trò này cũng cho phép duyệt / loại bản ghi trên website, nên chỉ thao tác ở đó khi được giao.</li>
+    <li><b>Thử kết nối</b>
+      <div class="os">
+        <figure><figcaption>macOS · Terminal (trong thư mục client)</figcaption><pre><code>cd stt-viettran/client
+chmod +x rtx.sh
+./rtx.sh gpu</code></pre></figure>
+        <figure><figcaption>Windows · PowerShell (trong thư mục client)</figcaption><pre><code>cd stt-viettran\client
+.\rtx.ps1 gpu</code></pre></figure>
+      </div>
+      <p>Thấy dòng <code>NVIDIA GeForce RTX 3090, … 24576 MiB</code> là kết nối được. Từ đây trở đi, mọi lệnh có hai dạng giống nhau: <code>./rtx.sh &lt;lệnh&gt;</code> trên Mac, <code>.\rtx.ps1 &lt;lệnh&gt;</code> trên Windows. Phần dưới chỉ ghi dạng Mac.</p></li>
+  </ol>
+</section>
+
+<section id="may-moi">
+  <h2><span class="n">3</span>Cài máy mới</h2>
+  <p>Máy thuê có thể được thay (máy cũ trả lại, máy mới có địa chỉ khác). Mỗi lần đổi máy:</p>
+  <ol>
+    <li>Cập nhật <code>RTX_HOST</code> và <code>RTX_PORT</code> trong <code>rtx.conf</code>.</li>
+    <li>Chạy <code>./rtx.sh setup</code>. Lệnh đưa script lên máy, tạo hai thư mục <code>/workspace/mms</code> và <code>/workspace/trocr</code>, cài PyTorch và thư viện (khoảng 3–10 phút tuỳ mạng của máy), rồi kiểm tra GPU. Thấy dòng <code>OK: torch 2.11.0+cu128 | CUDA 12.8 | NVIDIA GeForce RTX 3090</code> là xong.</li>
+    <li>Tải lại dữ liệu (mục 4, bước 1). Máy thuê <b>không có ổ lưu lâu dài</b>: khi máy bị huỷ, mọi thứ trên đó mất, kể cả các lần train chưa tải về.</li>
+  </ol>
+  <div class="note"><p>Chạy lại <code>setup</code> trên máy đã cài cũng an toàn: chỉ cập nhật script, không xoá dữ liệu hay kết quả.</p></div>
+</section>
+
+<section id="mms">
+  <h2><span class="n">4</span>Train mô hình nhận dạng giọng nói (MMS)</h2>
+  <p>Mô hình gốc là <code>facebook/mms-1b-all</code> của Meta (1 tỷ tham số). Ta không train lại cả mô hình mà chỉ train một <b>adapter</b> nhỏ (khoảng 2,2 triệu tham số) và lớp đầu ra theo bảng chữ Thái Việt. Đây là cách Meta khuyên dùng cho ngôn ngữ mới, ít dữ liệu.</p>
+  <ol class="steps">
+    <li><b>Tải bộ giọng nói đã duyệt</b>
+      <pre><code>./rtx.sh mms-download</code></pre>
+      Lệnh hỏi tên đăng nhập và mật khẩu VietTrans (mật khẩu không hiện khi gõ và không được lưu). Lần đầu mất vài phút; các lần sau chỉ tải bản ghi mới. Kết quả cuối có dạng <code>4479 bản ghi, 5.53 giờ, 6 người đọc</code>.</li>
+    <li><b>Xem danh sách người đọc</b>
+      <pre><code>./rtx.sh mms-speakers</code></pre>
+      In mã người đọc (<code>S000xx</code>), số bản ghi và số phút của từng người. Dùng để quyết định ai vào tập dev, ai vào tập test.</li>
+    <li><b>Kiểm tra và chia dữ liệu</b>
+      <pre><code>./rtx.sh mms-split</code></pre>
+      <p>Lệnh loại bản ghi hỏng (sai định dạng, không có tiếng, đọc quá nhanh so với câu: thường là đọc thiếu hoặc bị cắt), rồi chia <b>theo người đọc</b>:</p>
+      <div class="tbl"><table>
+        <thead><tr><th>Tập</th><th>Gồm</th><th>Dùng để</th></tr></thead>
+        <tbody>
+          <tr><td><code>train</code></td><td>Người đọc chính, trừ mọi câu có trong dev / test</td><td>Train</td></tr>
+          <tr><td><code>dev</code></td><td>Một người đọc riêng (mặc định <code>S00055</code>)</td><td>Chọn epoch tốt nhất</td></tr>
+          <tr><td><code>test_seen</code></td><td>~5% câu của người đọc chính, câu không có trong train</td><td>Đo trên giọng quen</td></tr>
+          <tr><td><code>test_unseen</code></td><td>Người đọc không có trong train (mặc định <code>S00052, S00051, S00001</code>)</td><td>Đo trên giọng mới</td></tr>
+        </tbody>
+      </table></div>
+      <p>Khi có người đọc mới tham gia, đổi bằng tham số. Một người chỉ được nằm ở <b>một</b> tập:</p>
+      <pre><code>./rtx.sh mms-split --dev-speakers S00055 --test-speakers S00052,S00051,S00060</code></pre></li>
+    <li><b>Chạy thử (khoảng 3 phút)</b>
+      <pre><code>./rtx.sh mms-smoke</code></pre>
+      Train 3 bước trên 64 câu để chắc code chạy được trước khi chạy thật. Điểm CER trên 100% ở bước này là bình thường.</li>
+    <li><b>Train thật</b>
+      <pre><code>./rtx.sh mms-train thu1 --epochs 10</code></pre>
+      <p><code>thu1</code> là tên lần train do bạn đặt (chữ không dấu, không cách, không trùng tên cũ). Lệnh chạy nền trên máy RTX: tắt máy tính của bạn hay mất mạng cũng không làm dừng train. Với khoảng 5 giờ âm thanh, 10 epoch mất khoảng 35 phút. Mỗi lúc chỉ chạy được một lần train.</p></li>
+    <li><b>Theo dõi tiến độ</b>
+      <pre><code>./rtx.sh mms-status thu1</code></pre>
+      Mỗi epoch in một dòng như <code>epoch 3.00 | dev CER 15.31 | WER(âm tiết) 34.88</code>. Khi xong sẽ có dòng <code>train xong sau … phút</code> và điểm của ba tập.</li>
+    <li><b>Xem tất cả các lần train</b>
+      <pre><code>./rtx.sh mms-runs</code></pre></li>
+    <li><b>Chấm lại hoặc dùng thử một lần train</b>
+      <pre><code>./rtx.sh mms-eval thu1
+./rtx.sh mms-eval thu1 --sets test_unseen</code></pre>
+      Muốn nhận dạng một file WAV (16 kHz, mono) đã có trên máy RTX: <code>./rtx.sh mms-eval thu1 --wav /đường/dẫn/file.wav</code>.</li>
+    <li><b>Tải mô hình đã train về máy bạn</b>
+      <pre><code>./rtx.sh mms-fetch thu1</code></pre>
+      Tải <code>adapter.blt.safetensors</code>, thư mục <code>processor/</code> và <code>report.json</code> vào <code>client/runs/thu1/</code>. Làm bước này trước khi máy RTX bị đổi hay huỷ.</li>
+  </ol>
+</section>
+
+<section id="ket-qua">
+  <h2><span class="n">5</span>Đọc kết quả</h2>
+  <ul>
+    <li><b>CER</b> (tỉ lệ lỗi ký tự): phần trăm ký tự bị sai, thiếu hoặc thừa so với câu đúng. Càng thấp càng tốt.</li>
+    <li><b>WER (âm tiết)</b>: như trên nhưng tính theo âm tiết (chữ Thái viết cách nhau theo âm tiết). Luôn cao hơn CER, vì sai một dấu là sai cả âm tiết.</li>
+    <li><b>Đúng nguyên câu</b>: phần trăm câu nhận dạng không sai ký tự nào.</li>
+  </ul>
+  <p>Kết quả lần train đầu tiên (20/10/2026, 10 epoch, 286 phút âm thanh train) để so sánh:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Tập</th><th>Số bản ghi</th><th>CER</th><th>WER (âm tiết)</th><th>Đúng nguyên câu</th></tr></thead>
+    <tbody>
+      <tr><td>dev (người đọc mới S00055)</td><td class="num">107</td><td class="num">10,6%</td><td class="num">23,8%</td><td class="num">15,9%</td></tr>
+      <tr><td>test_seen (giọng quen, câu mới)</td><td class="num">198</td><td class="num">6,3%</td><td class="num">14,4%</td><td class="num">21,7%</td></tr>
+      <tr><td>test_unseen (giọng mới)</td><td class="num">173</td><td class="num">17,3%</td><td class="num">42,7%</td><td class="num">1,2%</td></tr>
+    </tbody>
+  </table></div>
+  <div class="rule">
+    <p><strong>Chọn mô hình bằng dev, không bằng test.</strong> Muốn so hai cách train (khác epoch, khác learning rate…), so điểm <code>dev</code>. Hai tập test chỉ dùng để báo cáo kết quả cuối cùng; nếu dùng test để chọn thì con số báo cáo sẽ đẹp hơn thực tế.</p>
+    <p>Hai lần train giống hệt nhau vẫn có thể lệch nhau một chút. Chênh lệch dưới khoảng 1 điểm CER trên dev nhỏ (107 câu) thì chưa kết luận được bên nào tốt hơn.</p>
+  </div>
+  <p>Khoảng cách giữa <code>test_seen</code> và <code>test_unseen</code> cho biết mô hình phụ thuộc vào giọng người đọc đến đâu. Hiện hai người đọc chiếm khoảng 93% dữ liệu, nên cách cải thiện hiệu quả nhất là có thêm người đọc, nhất là người lớn tuổi và ở các vùng khác.</p>
+</section>
+
+<section id="gpu">
+  <h2><span class="n">6</span>Kiểm tra GPU</h2>
+  <pre><code>./rtx.sh gpu</code></pre>
+  <p>In ra tên GPU, bộ nhớ đang dùng / tổng (MiB), mức tải (%), nhiệt độ, công suất; các tiến trình đang dùng GPU; lần train đang chạy; dung lượng ổ <code>/workspace</code>. Khi đang train MMS, bộ nhớ thường khoảng 11–12 GB và mức tải 80–95%.</p>
+  <p>Muốn vào thẳng máy RTX để xem thêm: <code>./rtx.sh ssh</code> (gõ <code>exit</code> để thoát).</p>
+</section>
+
+<section id="tham-so">
+  <h2><span class="n">7</span>Tham số hay chỉnh khi train</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Tham số</th><th>Mặc định</th><th>Ý nghĩa</th></tr></thead>
+    <tbody>
+      <tr><td><code>--epochs</code></td><td class="num">10</td><td>Số lượt học qua toàn bộ dữ liệu train. Lần đầu điểm dev vẫn còn giảm nhẹ ở epoch 9–10.</td></tr>
+      <tr><td><code>--lr</code></td><td class="num">0.001</td><td>Tốc độ học của adapter.</td></tr>
+      <tr><td><code>--batch</code>, <code>--accum</code></td><td class="num">8, 2</td><td>Số đoạn âm thanh mỗi lượt và số lượt gộp; batch thực tế = tích hai số (16). Nếu báo hết bộ nhớ GPU, dùng <code>--batch 4 --accum 4</code>.</td></tr>
+      <tr><td><code>--max-sec</code></td><td class="num">20</td><td>Bỏ đoạn âm thanh dài hơn số giây này.</td></tr>
+    </tbody>
+  </table></div>
+  <pre><code>./rtx.sh mms-train thu2 --epochs 15 --lr 0.0005</code></pre>
+</section>
+
+<section id="trocr">
+  <h2><span class="n">8</span>Dự án TrOCR (nhận dạng chữ Thái từ ảnh)</h2>
+  <p>Thư mục <code>/workspace/trocr/</code> trên máy RTX đã được tạo (<code>data/</code>, <code>runs/</code>, <code>logs/</code>) và môi trường đã cài sẵn. <b>Chưa có script train</b> vì chưa có bộ dữ liệu ảnh kèm chữ đúng. Xem tình trạng:</p>
+  <pre><code>./rtx.sh trocr</code></pre>
+  <p>Trước khi bắt đầu, nhóm cần thống nhất:</p>
+  <ul>
+    <li>Nguồn ảnh: chữ in (trang sách, văn bản hành chính) hay chữ viết tay; ảnh từng dòng hay cả trang.</li>
+    <li>Nhãn: chữ Thái Việt Unicode chuẩn, cùng cách chuẩn hoá với bộ dịch.</li>
+    <li><b>Không dùng sách giáo trình tiếng Thái cho cán bộ (quyển 2)</b> làm dữ liệu train: sách này là tập test của mô hình dịch.</li>
+    <li>Có thể tự sinh ảnh bằng cách in câu trong kho ngữ liệu bằng font Tai Viet để train ban đầu, rồi tinh chỉnh bằng ảnh thật.</li>
+  </ul>
+</section>
+
+<section id="loi">
+  <h2><span class="n">9</span>Lỗi thường gặp</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Thông báo</th><th>Nguyên nhân</th><th>Cách xử lý</th></tr></thead>
+    <tbody>
+      <tr><td><code>Permission denied (publickey)</code></td><td>Khoá SSH của bạn chưa được thêm vào máy RTX, hoặc <code>RTX_KEY</code> sai đường dẫn</td><td>Gửi lại file <code>.pub</code> cho trưởng nhóm; kiểm tra <code>RTX_KEY</code></td></tr>
+      <tr><td><code>Connection refused</code> / <code>timed out</code></td><td>Máy đã đổi, đang tắt hoặc sai cổng</td><td>Hỏi địa chỉ mới, sửa <code>rtx.conf</code>, chạy <code>setup</code></td></tr>
+      <tr><td><code>Lỗi 403 … Kiểm duyệt giọng nói</code></td><td>Tài khoản VietTrans chưa có vai trò đó</td><td>Nhờ quản trị viên gán vai trò</td></tr>
+      <tr><td><code>Lỗi 401</code></td><td>Sai tên đăng nhập hoặc mật khẩu</td><td>Chạy lại <code>mms-download</code></td></tr>
+      <tr><td><code>đang có một lần train chạy</code></td><td>Mỗi lúc chỉ một lần train</td><td>Đợi xong (<code>mms-status</code>)</td></tr>
+      <tr><td><code>CUDA out of memory</code></td><td>Batch quá lớn</td><td><code>--batch 4 --accum 4</code></td></tr>
+      <tr><td>Windows: <code>running scripts is disabled</code></td><td>PowerShell chặn script</td><td>Mục 2, bước 5</td></tr>
+      <tr><td><code>No module named 'torch'</code></td><td>Máy mới chưa cài</td><td><code>./rtx.sh setup</code></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="bang-lenh">
+  <h2><span class="n">10</span>Bảng lệnh</h2>
+  <p>Mac: <code>./rtx.sh &lt;lệnh&gt;</code> · Windows: <code>.\rtx.ps1 &lt;lệnh&gt;</code></p>
+  <div class="tbl"><table>
+    <thead><tr><th>Lệnh</th><th>Việc làm</th></tr></thead>
+    <tbody>
+      <tr><td><code>setup</code></td><td>Đưa script lên máy mới, tạo thư mục, cài môi trường</td></tr>
+      <tr><td><code>gpu</code></td><td>Tình trạng GPU, tiến trình, ổ đĩa</td></tr>
+      <tr><td><code>ssh</code></td><td>Mở dòng lệnh trên máy RTX</td></tr>
+      <tr><td><code>mms-download</code></td><td>Tải / cập nhật bộ giọng nói đã duyệt</td></tr>
+      <tr><td><code>mms-speakers</code></td><td>Danh sách người đọc</td></tr>
+      <tr><td><code>mms-split [tham số]</code></td><td>Kiểm tra và chia dữ liệu theo người đọc</td></tr>
+      <tr><td><code>mms-smoke</code></td><td>Chạy thử 3 bước</td></tr>
+      <tr><td><code>mms-train &lt;tên&gt; [tham số]</code></td><td>Train adapter (chạy nền)</td></tr>
+      <tr><td><code>mms-status [tên]</code></td><td>Tiến độ lần train</td></tr>
+      <tr><td><code>mms-runs</code></td><td>Các lần train và điểm</td></tr>
+      <tr><td><code>mms-eval &lt;tên&gt; [tham số]</code></td><td>Chấm lại / nhận dạng file WAV</td></tr>
+      <tr><td><code>mms-fetch &lt;tên&gt;</code></td><td>Tải adapter + báo cáo về máy bạn</td></tr>
+      <tr><td><code>trocr</code></td><td>Tình trạng dự án TrOCR</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+</main>
+</div>
+
+<footer>Dự án VietTrans: dịch máy và nhận dạng giọng nói tiếng Thái (chữ Thái Việt). Có thắc mắc hoặc lỗi lạ, gửi nguyên văn thông báo lỗi cho trưởng nhóm (không gửi kèm câu chữ Thái hay file âm thanh).</footer>
