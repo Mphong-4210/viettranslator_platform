@@ -1,0 +1,403 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Hành trình một câu dịch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&family=Noto+Sans+Tai+Viet&display=swap">
+<style>
+:root{
+  --bg:#F3F4F7; --surface:#FFFFFF; --surface-2:#EBEEF4; --ink:#16203A; --muted:#5B6478; --line:#D7DCE6;
+  --indigo:#2E4A9E; --indigo-soft:#DCE3F6; --crimson:#B8323A; --crimson-soft:#F6DEE0;
+  --amber:#B07A0E; --amber-soft:#F7ECD2; --teal:#1E7A6E; --teal-soft:#D8EEEA;
+  --tai:"Noto Sans Tai Viet","Tai Viet Times",sans-serif;
+  --ui:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --bg:#0F1424; --surface:#182038; --surface-2:#212B48; --ink:#E6E9F2; --muted:#9AA3B8; --line:#2D3858;
+  --indigo:#8EA6F0; --indigo-soft:#263463; --crimson:#F07780; --crimson-soft:#4A2330;
+  --amber:#E8B04A; --amber-soft:#43361A; --teal:#5CC7B6; --teal-soft:#183D3A;
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0F1424; --surface:#182038; --surface-2:#212B48; --ink:#E6E9F2; --muted:#9AA3B8; --line:#2D3858;
+  --indigo:#8EA6F0; --indigo-soft:#263463; --crimson:#F07780; --crimson-soft:#4A2330;
+  --amber:#E8B04A; --amber-soft:#43361A; --teal:#5CC7B6; --teal-soft:#183D3A;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--ui);padding-inline:20px;padding-block:28px 40px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+h1{font-size:clamp(26px,4vw,38px);line-height:1.15;margin:0;font-weight:800;letter-spacing:-.01em;text-wrap:balance}
+.lede{color:var(--muted);margin:6px 0 0;max-width:70ch}
+.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.tai{font-family:var(--tai)}
+.mono{font-family:var(--mono)}
+
+/* câu vào / ra */
+.io{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:stretch}
+.io .box{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.io .src{font-family:var(--tai);font-size:clamp(22px,3vw,30px);line-height:1.5}
+.io .dst{font-size:clamp(18px,2.4vw,22px);font-weight:600;min-height:1.5em}
+.io .dst .caret{display:inline-block;width:2px;height:1.1em;background:var(--indigo);vertical-align:-3px;animation:blink 1s steps(1) infinite}
+.io .arrow{display:grid;place-items:center;color:var(--muted);font-size:26px}
+@keyframes blink{50%{opacity:0}}
+
+/* bố cục chính */
+.main{display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start}
+.rail{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px)}
+.rail button{all:unset;box-sizing:border-box;width:100%;display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:start;padding:9px 10px;border-radius:10px;cursor:pointer;color:var(--muted)}
+.rail button:hover{background:var(--surface-2)}
+.rail button:focus-visible{outline:2px solid var(--indigo);outline-offset:2px}
+.rail .num{font:600 12px/1 var(--mono);width:26px;height:26px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--line);color:var(--muted);margin-top:1px}
+.rail .t{font-weight:600;color:var(--ink);font-size:14px;line-height:1.3}
+.rail .k{font-size:12.5px;line-height:1.35}
+.rail button[aria-current="step"]{background:var(--surface);box-shadow:0 0 0 1px var(--line)}
+.rail button[aria-current="step"] .num{background:var(--indigo);border-color:var(--indigo);color:var(--surface)}
+.rail button.done .num{border-color:var(--indigo);color:var(--indigo)}
+
+.stage{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.stage-head{padding:18px 22px 0;display:flex;flex-direction:column;gap:4px}
+.stage-head h2{margin:0;font-size:22px;line-height:1.25;text-wrap:balance}
+.canvas{min-height:300px;padding:22px;display:flex;flex-direction:column;justify-content:center;gap:16px;overflow-x:auto}
+.notes{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid var(--line)}
+.notes > div{padding:16px 22px;display:flex;flex-direction:column;gap:6px}
+.notes > div + div{border-left:1px solid var(--line)}
+.notes h3{margin:0;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.notes p{margin:0;max-width:62ch}
+.tech{color:var(--ink)}
+.tag{display:inline-block;font:600 11.5px/1 var(--ui);padding:5px 8px;border-radius:999px;background:var(--indigo-soft);color:var(--indigo);margin:2px 4px 2px 0}
+
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 22px;border-top:1px solid var(--line);background:var(--surface-2)}
+.btn{font:600 14px var(--ui);padding:8px 14px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn:hover{border-color:var(--indigo)}
+.btn:focus-visible{outline:2px solid var(--indigo);outline-offset:2px}
+.btn.primary{background:var(--indigo);border-color:var(--indigo);color:var(--surface)}
+.progress{flex:1 1 160px;height:6px;border-radius:3px;background:var(--line);overflow:hidden;min-width:120px}
+.progress i{display:block;height:100%;width:0;background:var(--indigo);transition:width .3s}
+.speed{display:flex;gap:6px;align-items:center;color:var(--muted);font-size:13px}
+.speed select{font:inherit;padding:5px 6px;border-radius:7px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+
+/* phần tử dùng trong các bước */
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.syl{font-family:var(--tai);font-size:26px;padding:6px 10px;border-radius:9px;background:var(--surface-2);border:1px solid var(--line);transition:all .5s ease;line-height:1.4}
+.syl.name{background:var(--crimson-soft);border-color:var(--crimson);color:var(--crimson)}
+.syl.dx{background:var(--amber-soft);border-color:var(--amber);color:var(--amber)}
+.syl.fade{opacity:.25}
+.ph{font:700 22px var(--mono);padding:8px 12px;border-radius:9px;background:var(--crimson);color:var(--surface)}
+.chip{display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 9px;border-radius:9px;border:1px solid var(--line);background:var(--surface-2);min-width:52px}
+.chip .w{font-family:var(--tai);font-size:22px;line-height:1.3}
+.chip .w.lat{font-family:var(--mono);font-size:16px}
+.chip .id{font:12px var(--mono);color:var(--muted)}
+.chip.unk{background:var(--crimson-soft);border-color:var(--crimson)}
+.chip.unk .w{color:var(--crimson);font-family:var(--mono);font-size:14px}
+.chip.special{background:var(--indigo-soft);border-color:var(--indigo)}
+.chip.special .w{color:var(--indigo);font-family:var(--mono);font-size:13px}
+.label{font-size:12.5px;color:var(--muted);font-weight:600}
+.pop{animation:pop .45s ease both}
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:none}}
+.cp{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 10px;border-radius:9px;border:1px solid var(--line);background:var(--surface-2);transition:transform .6s ease, background .3s}
+.cp .g{font-family:var(--tai);font-size:28px;line-height:1.3;min-height:1.3em}
+.cp .u{font:12px var(--mono);color:var(--muted)}
+.cp.mark{background:var(--amber-soft);border-color:var(--amber)}
+.vec{display:grid;grid-template-columns:repeat(16,1fr);gap:2px;width:min(260px,52vw)}
+.vec i{display:block;aspect-ratio:1;border-radius:2px;transition:background .8s ease}
+.emb{display:grid;grid-template-columns:auto auto 1fr;gap:8px 14px;align-items:center}
+.gl{display:flex;flex-wrap:wrap;gap:4px}
+.gl span{font-size:12.5px;padding:3px 7px;border-radius:999px;background:var(--teal-soft);color:var(--teal);font-weight:600}
+.layers{display:flex;gap:4px;align-items:stretch}
+.layers .ly{flex:1;min-width:14px;height:34px;border-radius:5px;background:var(--surface-2);border:1px solid var(--line);position:relative;transition:background .3s}
+.layers .ly.on{background:var(--indigo-soft);border-color:var(--indigo)}
+.layers .ly b{position:absolute;right:-3px;top:-3px;width:9px;height:9px;border-radius:50%;background:var(--amber)}
+.beam{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;align-items:center;font-size:15px}
+.beam .lane{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:6px 10px;border-radius:8px;background:var(--surface-2);border:1px solid var(--line);transition:opacity .4s, border-color .4s}
+.beam .lane.best{border-color:var(--indigo);background:var(--indigo-soft)}
+.beam .lane.drop{opacity:.35;text-decoration:line-through}
+.beam .lane span{font-weight:600}
+.small{font-size:12.5px;color:var(--muted)}
+.compare{display:grid;grid-template-columns:auto 1fr;gap:10px 14px;align-items:center}
+.result{font-size:clamp(20px,3vw,28px);font-weight:700;line-height:1.35}
+.result mark{background:var(--crimson-soft);color:var(--crimson);padding:0 4px;border-radius:5px}
+.stats{display:flex;flex-wrap:wrap;gap:12px}
+.stat{padding:10px 14px;border-radius:10px;background:var(--surface-2);display:flex;flex-direction:column;min-width:130px}
+.stat b{font-size:22px;font-variant-numeric:tabular-nums}
+.stat span{font-size:12.5px;color:var(--muted)}
+svg.att{width:100%;height:120px;overflow:visible}
+svg.att path{fill:none;stroke:var(--indigo);stroke-linecap:round;opacity:0;transition:opacity .5s}
+svg.att path.on{opacity:.55}
+footer{color:var(--muted);font-size:13px;display:flex;flex-direction:column;gap:4px;max-width:90ch}
+
+@media (max-width:860px){
+  .main{grid-template-columns:1fr}
+  .rail{position:static;flex-direction:row;overflow-x:auto;padding-bottom:4px}
+  .rail li{flex:0 0 auto}
+  .rail button{width:auto;grid-template-columns:26px auto}
+  .rail .k{display:none}
+  .notes{grid-template-columns:1fr}
+  .notes > div + div{border-left:0;border-top:1px solid var(--line)}
+  .io{grid-template-columns:1fr}
+  .io .arrow{transform:rotate(90deg)}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">VietTrans · Thái → Việt</div>
+    <h1>Hành trình một câu dịch</h1>
+    <p class="lede">Một câu chữ Thái đi qua mười bước trước khi thành câu tiếng Việt. Bấm <b>Chạy</b> để xem từng bước, hoặc chọn một bước bên trái. Ví dụ dưới đây chạy thật trên mô hình đang phục vụ viettrans.info.</p>
+  </header>
+
+  <section class="io" aria-label="Câu vào và câu ra">
+    <div class="box">
+      <span class="label">Câu chữ Thái (đầu vào)</span>
+      <div class="src" id="src"></div>
+    </div>
+    <div class="arrow" aria-hidden="true">→</div>
+    <div class="box">
+      <span class="label">Bản dịch tiếng Việt (đầu ra)</span>
+      <div class="dst" id="dst"></div>
+    </div>
+  </section>
+
+  <section class="main">
+    <ol class="rail" id="rail" aria-label="Các bước"></ol>
+    <article class="stage" aria-live="polite">
+      <div class="stage-head">
+        <div class="eyebrow" id="stepNo"></div>
+        <h2 id="stepTitle"></h2>
+      </div>
+      <div class="canvas" id="canvas"></div>
+      <div class="notes">
+        <div><h3>Kỹ thuật</h3><p class="tech" id="tech"></p><div id="tags"></div></div>
+        <div><h3>Vì sao cần bước này</h3><p id="why"></p></div>
+      </div>
+      <div class="controls">
+        <button class="btn" id="prev" type="button">← Trước</button>
+        <button class="btn primary" id="play" type="button">▶ Chạy</button>
+        <button class="btn" id="next" type="button">Sau →</button>
+        <div class="progress" aria-hidden="true"><i id="bar"></i></div>
+        <label class="speed" for="spd">Tốc độ
+          <select id="spd"><option value="1.6">Chậm</option><option value="1" selected>Vừa</option><option value="0.6">Nhanh</option></select>
+        </label>
+      </div>
+    </article>
+  </section>
+
+  <footer>
+    <span>Ví dụ chạy ngày 25/11/2026 trên mô hình Thái → Việt <span class="mono">local_05_20261121_2350</span> (NLLB-200 600M + LoRA). Token và mã số ở bước 5, nghĩa từ điển ở bước 6 và kết quả là số liệu thật. Các vector ở bước 6, đường chú ý ở bước 7 và các nhánh tìm kiếm ở bước 8 là hình minh hoạ cách hoạt động, không phải giá trị đo.</span>
+    <span>Chất lượng trên 445 câu kiểm tra lấy từ sách thật (không dùng khi huấn luyện): chrF++ 43,2; mô hình NLLB gốc chưa mở rộng từ vựng chỉ đạt 4,2.</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+const SRC = 'ꪶꪒꪉ ꪊꪲ꪿ ꪈꪫꪸ꪿ꪙ ꪒꪲꪉ ꪫꪸꪒ ꪣꪱ ꪤꪱꪣ ꪝꪷ꪿ ꪵꪣ꪿ ꪀꪺꪉ ꪚ꫁ꪱꪙ.';
+const SYL = ['ꪶꪒꪉ','ꪊꪲ꪿','ꪈꪫꪸ꪿ꪙ','ꪒꪲꪉ','ꪫꪸꪒ','ꪣꪱ','ꪤꪱꪣ','ꪝꪷ꪿','ꪵꪣ꪿','ꪀꪺꪉ','ꪚ꫁ꪱꪙ'];
+const DX = [0,1], NAME = [2,3,4];
+const OUT = 'Đồng chí Nguyễn Đình Việt đến thăm bà con trong bản.';
+const MODEL_OUT = ['A1','đến','thăm','bà','con','trong','bản','.'];
+// token thật (tok_ext_v2): [token, id]
+const TOK = [['tha_Thai',256175],['▁',248059],['<unk>',3],['A',248085],['1',248126],['<unk>',3],
+  ['ꪣꪱ',258315],['ꪤꪱꪣ',258406],['ꪝꪷ꪿',258082],['ꪵꪣ꪿',259464],['ꪀꪺꪉ',256310],['ꪚ꫁ꪱꪙ',257876],['▁.',81],['</s>',2]];
+// nghĩa từ điển dùng để khởi tạo vector (syllables.json, trường direct)
+const GLOSS = [['ꪣꪱ',['về','đến','lại']],['ꪤꪱꪣ',['thăm']],['ꪝꪷ꪿',['bố','cha','ông']],['ꪵꪣ꪿',['mẹ','bà','con']],['ꪀꪺꪉ',['trong']],['ꪚ꫁ꪱꪙ',['bản']]];
+
+const $ = s => document.querySelector(s);
+const canvas = $('#canvas');
+let step = 0, playing = false, timers = [];
+const speed = () => parseFloat($('#spd').value);
+function later(fn, ms){ timers.push(setTimeout(fn, ms * speed())); }
+function clearTimers(){ timers.forEach(clearTimeout); timers = []; }
+function el(tag, cls, html){ const e = document.createElement(tag); if(cls) e.className = cls; if(html != null) e.innerHTML = html; return e; }
+function cps(s){ return [...s].map(c => 'U+' + c.codePointAt(0).toString(16).toUpperCase()); }
+function sylRow(cls){ const r = el('div','row'); SYL.forEach((s,i)=>{ const x = el('span','syl',s); x.dataset.i = i; r.appendChild(x); }); if(cls) r.classList.add(cls); return r; }
+// vector minh hoạ: màu từ một hàm băm của chuỗi (không phải giá trị thật)
+function hash(s){ let h = 2166136261; for(const c of s){ h ^= c.codePointAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+function vecColors(seed, n){ const out = []; let h = hash(seed); for(let i=0;i<n;i++){ h = Math.imul(h ^ (h>>>15), 2246822507) >>> 0; out.push((h % 1000)/1000); } return out; }
+function vec(seed, mode){
+  const v = el('div','vec'); const vals = vecColors(seed, 32);
+  vals.forEach(x => { const i = el('i'); i.style.background = mode === 'blank' ? 'var(--line)' : `color-mix(in oklab, var(--indigo) ${Math.round(15 + x*85)}%, var(--surface))`; v.appendChild(i); });
+  return v;
+}
+
+const STEPS = [
+ { t:'Nhận câu chữ Thái', k:'Unicode Tai Viet, giải mã phông cũ',
+   tech:'Câu được nhận dưới dạng chữ Unicode Tai Viet (bảng mã U+AA80–U+AADF). Nếu văn bản gõ bằng phông cũ "Thai VietNam chuan", mỗi chữ thực chất là một mã ASCII; bộ giải mã của dự án đổi từng mã về đúng chữ Thái và sắp lại vị trí dấu.',
+   tags:['Unicode U+AA80–AADF','Bộ giải mã phông cũ'],
+   why:'Sách, luật và tài liệu chữ Thái phần lớn được gõ bằng phông cũ. Máy tính không đọc được chúng như chữ, nên phải đổi về Unicode trước khi xử lý bất cứ gì.',
+   run(){
+     const box = el('div','row'); canvas.append(el('div','label','Từng ký tự được đọc vào'), box);
+     const chars = [...SRC]; let i = 0;
+     const tick = () => { if(i >= chars.length){ canvas.append(el('div','small pop', `${chars.length} ký tự Unicode · ${SYL.length} âm tiết`)); return; }
+       const c = chars[i++]; const s = el('span','tai pop', c === ' ' ? '&nbsp;' : c); s.style.fontSize = '28px'; box.appendChild(s); later(tick, 70); };
+     tick();
+   }},
+ { t:'Chuẩn hoá chữ', k:'NFC + sắp thứ tự dấu',
+   tech:'Đưa chuỗi về dạng NFC, rồi sắp các dấu kết hợp đứng sau một phụ âm theo một thứ tự cố định (theo lớp kết hợp, rồi theo mã). Hai cách gõ cho ra cùng một hình thì sau bước này cũng thành cùng một chuỗi.',
+   tags:['Unicode NFC','Sắp thứ tự dấu (visual key)'],
+   why:'Chữ Thái có nhiều dấu chồng lên nhau. Gõ dấu thanh trước hay dấu nguyên âm trước đều hiện giống hệt, nhưng máy coi là hai từ khác nhau. NFC không sửa được trường hợp này nên dự án tự sắp lại.',
+   run(){
+     canvas.append(el('div','label','Âm tiết ꪈꪫꪸ꪿ꪙ gõ theo hai cách — trông giống nhau'));
+     const a = ['ꪈ','ꪫ','꪿','ꪸ','ꪙ'];
+     const row = el('div','row'); canvas.append(row);
+     const tiles = a.map(c => { const x = el('div','cp'); const isMark = /[ꪰꪲ-ꪴꪷꪸꪾ꪿꫁]/.test(c);
+       x.innerHTML = `<span class="g">${isMark ? '◌'+c : c}</span><span class="u">${cps(c)[0]}</span>`; if(isMark) x.classList.add('mark'); row.appendChild(x); return x; });
+     const cap = el('div','small','Cách gõ của người dùng: dấu thanh ꪿ (U+AABF) đứng trước nguyên âm ꪸ (U+AAB8)'); canvas.append(cap);
+     later(() => { const w = tiles[2].getBoundingClientRect().width + 8; tiles[2].style.transform = `translateX(${w}px)`; tiles[3].style.transform = `translateX(-${w}px)`; }, 1400);
+     later(() => { cap.innerHTML = 'Sau chuẩn hoá: <b>U+AAB8 trước U+AABF</b> — mọi cách gõ đều thành một chuỗi duy nhất'; cap.classList.add('pop'); }, 2400);
+   }},
+ { t:'Tách câu', k:'Cắt ở . ? ! và xuống dòng',
+   tech:'Đoạn văn dài được cắt thành từng câu ở dấu chấm, chấm hỏi, chấm than và chỗ xuống dòng. Mỗi câu được dịch riêng rồi ghép lại theo thứ tự.',
+   tags:['Tách câu theo dấu câu'],
+   why:'Chất lượng dịch giảm khi câu dài: trên tập kiểm tra, câu 6–10 âm tiết đạt khoảng 53 điểm, câu 36–80 âm tiết chỉ khoảng 41. Dịch từng câu ngắn cho kết quả tốt hơn dịch cả đoạn một lần.',
+   run(){
+     const r = sylRow(); canvas.append(el('div','label','Câu này chỉ có một dấu chấm cuối'), r);
+     later(() => { const end = el('span','ph','.'); end.style.background = 'var(--indigo)'; end.classList.add('pop'); r.appendChild(end); }, 600);
+     later(() => canvas.append(el('div','small pop','1 câu · 11 âm tiết → dịch trong một lượt')), 1300);
+   }},
+ { t:'Tìm tên riêng và giữ chỗ', k:'Bảng tra tên + ký hiệu ⟦A1⟧',
+   tech:'Bảng tra tên do người bản ngữ điền (49 danh xưng, 67 họ, 258 âm tiết tên, 30 tên đầy đủ) tìm chuỗi "danh xưng + họ + tên". Cả cụm được thay bằng ký hiệu ⟦A1⟧ và nhớ cách viết tiếng Việt đúng của nó.',
+   tags:['Bảng tra tên người','Luật danh xưng + họ + tên','Ký hiệu giữ chỗ'],
+   why:'Mô hình hay đoán sai tên người hiếm gặp, ví dụ đọc "Đình Việt" thành "Chí Minh". Để mô hình chỉ dịch phần còn lại, còn tên thì lấy chính xác từ bảng tra.',
+   run(){
+     const r = sylRow(); canvas.append(r);
+     const map = el('div','compare'); canvas.append(map);
+     const s = [...r.children];
+     later(() => DX.forEach(i => s[i].classList.add('dx')), 700);
+     later(() => map.append(el('span','label pop','Danh xưng'), el('span','pop', '<span class="tai" style="font-size:20px">ꪶꪒꪉ ꪊꪲ꪿</span> = đồng chí')), 900);
+     later(() => NAME.forEach(i => s[i].classList.add('name')), 1700);
+     later(() => map.append(el('span','label pop','Họ + tên'), el('span','pop', '<span class="tai" style="font-size:20px">ꪈꪫꪸ꪿ꪙ ꪒꪲꪉ ꪫꪸꪒ</span> = Nguyễn Đình Việt')), 1900);
+     later(() => { [...DX, ...NAME].forEach(i => s[i].classList.add('fade')); }, 2900);
+     later(() => { [...DX, ...NAME].forEach(i => s[i].remove()); const p = el('span','ph pop','⟦A1⟧'); r.prepend(p);
+       map.append(el('span','label pop','Ghi nhớ'), el('span','pop','<b class="mono">A1</b> → “đồng chí Nguyễn Đình Việt”')); }, 3500);
+   }},
+ { t:'Tách thành token', k:'Mở rộng từ vựng ~5.000 âm tiết',
+   tech:'Bộ tách từ của NLLB được bổ sung khoảng 5.000 âm tiết Thái, mỗi âm tiết là một token riêng (256.204 → 261.893 token). Thẻ tha_Thai báo ngôn ngữ nguồn; </s> đánh dấu hết câu.',
+   tags:['Mở rộng bộ từ vựng','1 âm tiết = 1 token'],
+   why:'NLLB gốc chưa từng thấy chữ Thái Việt: mọi âm tiết đều thành <unk> (không biết), nên mô hình không “nhìn” được câu nguồn. Sau khi mở rộng, không còn âm tiết Thái nào bị mất.',
+   run(){
+     canvas.append(el('div','label','NLLB gốc (chưa mở rộng)'));
+     const a = el('div','row'); canvas.append(a);
+     SYL.slice(5).forEach((_,i) => later(() => { const c = el('div','chip unk pop','<span class="w">&lt;unk&gt;</span><span class="id">3</span>'); a.appendChild(c); }, 120*i));
+     later(() => { canvas.append(el('div','label pop','VietTrans (đã mở rộng)')); const b = el('div','row'); canvas.append(b);
+       TOK.forEach(([t,id],i) => later(() => {
+         const special = t === 'tha_Thai' || t === '</s>';
+         const isTai = /[ꪀ-꫟]/.test(t);
+         const c = el('div','chip pop' + (special ? ' special' : '') + (t === '<unk>' ? ' unk' : ''));
+         c.innerHTML = `<span class="w ${isTai ? '' : 'lat'}">${t.replace('<','&lt;').replace('>','&gt;')}</span><span class="id">${id}</span>`;
+         b.appendChild(c); }, 130*i));
+       later(() => canvas.append(el('div','small pop','Dấu ⟦ ⟧ thành &lt;unk&gt; nhưng lõi “A1” vẫn giữ được — mô hình đã học chép nguyên “A1” sang bản dịch.')), 130*TOK.length + 200);
+     }, 1700);
+   }},
+ { t:'Gán vector cho từng token', k:'Khởi tạo từ nghĩa trong từ điển',
+   tech:'Mỗi token mới cần một vector (embedding) để mô hình tính toán. Thay vì khởi tạo ngẫu nhiên, vector của âm tiết Thái được lấy bằng trung bình vector của các nghĩa tiếng Việt trong từ điển Thái–Việt, rồi được tinh chỉnh tiếp khi huấn luyện.',
+   tags:['Khởi tạo embedding từ từ điển','Từ điển ~13.400 nghĩa'],
+   why:'Đây là điểm mới chính của dự án. Cùng dữ liệu và cách huấn luyện, khởi tạo ngẫu nhiên chỉ đạt 11,4 chrF++, khởi tạo từ từ điển đạt 34,9 (+23,5 điểm).',
+   run(){
+     const g = el('div','emb'); canvas.append(el('div','label','Nghĩa từ điển → vector khởi đầu (vector là hình minh hoạ)'), g);
+     GLOSS.forEach(([s,gl],i) => later(() => {
+       const w = el('span','tai pop',s); w.style.fontSize = '24px';
+       const glb = el('div','gl pop'); gl.forEach(x => glb.append(el('span','',x)));
+       const v = vec(s,'blank'); v.classList.add('pop');
+       g.append(w, glb, v);
+       later(() => { const nv = vec(gl.join('|')); [...v.children].forEach((c,k) => c.style.background = nv.children[k].style.background); }, 500);
+     }, 450*i));
+     later(() => canvas.append(el('div','small pop','Âm tiết không có trong từ điển (như ꪫꪸꪒ) bắt đầu từ vector trung bình và học dần từ dữ liệu.')), 450*GLOSS.length + 600);
+   }},
+ { t:'Bộ mã hoá (encoder)', k:'Transformer 12 lớp + LoRA',
+   tech:'NLLB-200 (600 triệu tham số) đọc cả câu qua 12 lớp Transformer. Ở mỗi lớp, cơ chế chú ý (self-attention) cho mỗi token “nhìn” mọi token khác. Dự án chỉ huấn luyện thêm các ma trận nhỏ LoRA (hạng 16) gắn vào từng lớp; trọng số gốc giữ nguyên.',
+   tags:['NLLB-200 600M','Self-attention','LoRA r = 16'],
+   why:'Với khoảng 19.700 cặp câu, huấn luyện lại toàn bộ 600 triệu tham số sẽ quên kiến thức cũ và học vẹt. LoRA chỉ học một phần rất nhỏ nên giữ được khả năng tiếng Việt sẵn có của NLLB.',
+   run(){
+     const toks = ['A1','ꪣꪱ','ꪤꪱꪣ','ꪝꪷ꪿','ꪵꪣ꪿','ꪀꪺꪉ','ꪚ꫁ꪱꪙ'];
+     const r = el('div','row'); toks.forEach(t => { const c = el('div','chip'); c.innerHTML = `<span class="w ${t==='A1'?'lat':''}">${t}</span>`; r.appendChild(c); });
+     const svgNS = 'http://www.w3.org/2000/svg'; const svg = document.createElementNS(svgNS,'svg'); svg.setAttribute('class','att'); svg.setAttribute('viewBox','0 0 700 120'); svg.setAttribute('preserveAspectRatio','none');
+     const pairs = [[3,4],[4,3],[1,2],[2,4],[5,6],[3,6],[0,1],[2,6]];
+     const x = i => 50 + i*100;
+     const paths = pairs.map(([a,b],k) => { const p = document.createElementNS(svgNS,'path'); const h = 25 + Math.abs(a-b)*14;
+       p.setAttribute('d',`M${x(a)},115 C${x(a)},${115-h*1.6} ${x(b)},${115-h*1.6} ${x(b)},115`); p.setAttribute('stroke-width', String(1.5 + (k%3))); svg.appendChild(p); return p; });
+     canvas.append(el('div','label','Chú ý giữa các token (minh hoạ): ꪝꪷ꪿ và ꪵꪣ꪿ nhìn nhau'), svg, r);
+     const ly = el('div','layers'); for(let i=0;i<12;i++){ const d = el('div','ly'); d.title = 'Lớp ' + (i+1); d.innerHTML = '<b title="LoRA"></b>'; ly.appendChild(d); }
+     canvas.append(el('div','label','12 lớp encoder · chấm vàng = bộ chỉnh LoRA'), ly);
+     paths.forEach((p,k) => later(() => p.classList.add('on'), 250 + 220*k));
+     [...ly.children].forEach((d,i) => later(() => d.classList.add('on'), 300 + 230*i));
+   }},
+ { t:'Bộ giải mã (decoder) sinh tiếng Việt', k:'Beam search 4, cấm chữ Thái',
+   tech:'Bộ giải mã viết bản dịch từng token một, bắt đầu bằng thẻ vie_Latn (ép ra tiếng Việt). Tìm kiếm chùm (beam search) giữ 4 bản nháp tốt nhất ở mỗi bước rồi chọn bản có điểm cao nhất. Các token chữ Thái bị cấm xuất hiện trong đầu ra.',
+   tags:['Beam search = 4','Ép ngôn ngữ đích vie_Latn','Cấm token chữ Thái'],
+   why:'Dịch từng chữ theo từ điển sẽ ra “bố mẹ” cho ꪝꪷ꪿ ꪵꪣ꪿. Mô hình nhìn cả câu nên chọn “bà con”, đúng nghĩa trong ngữ cảnh. Beam search tránh chọn vội một từ đầu tiên có vẻ đúng nhưng dẫn tới câu sai.',
+   run(){
+     const out = el('div','row'); canvas.append(el('div','label','Bản dịch được viết dần (theo từ)'), out);
+     const b = el('div','beam'); canvas.append(el('div','label','4 nhánh nháp ở bước “ꪝꪷ꪿ ꪵꪣ꪿” (minh hoạ cách chọn, không phải số đo)'), b);
+     const lanes = [['A1 đến thăm','bà con',true],['A1 đến thăm','bố mẹ',false],['A1 về thăm','bà con',false],['A1 đến thăm','cha mẹ',false]];
+     const laneEls = lanes.map(([a,c],i) => { const l = el('div','lane'); l.innerHTML = `${a} <span>${c}</span> …`; b.append(el('span','small','Nhánh ' + (i+1)), l); l.style.opacity = 0; return l; });
+     MODEL_OUT.forEach((w,i) => later(() => { const c = el('div','chip pop' + (w==='A1' ? ' special' : '')); c.innerHTML = `<span class="w lat">${w}</span>`; out.appendChild(c);
+       if(i === 2){ laneEls.forEach((l,k) => later(() => l.style.opacity = 1, 150*k)); }
+       if(i === 4){ laneEls.forEach((l,k) => lanes[k][2] ? l.classList.add('best') : l.classList.add('drop')); } }, 650*i));
+   }},
+ { t:'Trả lại tên riêng', k:'Thay A1 bằng tên trong bảng',
+   tech:'Tìm đúng một chỗ “A1” trong bản dịch và thay bằng cách viết đã ghi nhớ ở bước 4, rồi viết hoa chữ đầu câu và dọn khoảng trắng. Nếu mô hình làm mất hoặc nhân đôi ký hiệu, câu được dịch lại theo cách thường (không giữ chỗ).',
+   tags:['Thay ký hiệu giữ chỗ','Dịch lại khi mất ký hiệu'],
+   why:'Tên lãnh tụ, địa danh, tên người phải đúng từng chữ. Lấy tên từ bảng do người bản ngữ kiểm tra chắc chắn hơn để mô hình tự đoán.',
+   run(){
+     const r = el('div','result'); r.innerHTML = '<span class="ph" style="font-size:20px">A1</span> đến thăm bà con trong bản.'; canvas.append(r);
+     later(() => { r.innerHTML = '<mark>đồng chí Nguyễn Đình Việt</mark> đến thăm bà con trong bản.'; r.classList.add('pop'); }, 1200);
+     later(() => { r.innerHTML = '<mark>Đồng chí Nguyễn Đình Việt</mark> đến thăm bà con trong bản.'; }, 2300);
+     later(() => canvas.append(el('div','small pop','Viết hoa chữ đầu câu · bỏ khoảng trắng thừa trước dấu chấm')), 2400);
+   }},
+ { t:'Kết quả', k:'Trả về cho website',
+   tech:'Bản dịch được trả về website qua API kèm danh sách tên đã nhận diện. Cả quá trình chạy trên máy chủ GPU của nhóm (RTX 5070 Ti), khoảng 50 mili-giây mỗi câu khi dịch theo lô.',
+   tags:['API FastAPI','GPU RTX 5070 Ti'],
+   why:'Người dùng nhận câu dịch hoàn chỉnh; tên riêng được đánh dấu để có thể kiểm tra lại.',
+   run(){
+     const r = el('div','result pop'); r.innerHTML = '<mark>Đồng chí Nguyễn Đình Việt</mark> đến thăm bà con trong bản.'; canvas.append(r);
+     const st = el('div','stats'); canvas.append(st);
+     [['43,2','chrF++ Thái → Việt trên 445 câu sách thật'],['4,2','NLLB gốc trên cùng loại câu'],['≈ 50 ms','mỗi câu khi dịch theo lô'],['261.893','token trong bộ từ vựng (gốc 256.204)']]
+       .forEach(([b,s],i) => later(() => { const d = el('div','stat pop'); d.innerHTML = `<b>${b}</b><span>${s}</span>`; st.appendChild(d); }, 300*i));
+   }},
+];
+
+// dựng danh sách bước
+const rail = $('#rail');
+STEPS.forEach((s,i) => { const li = el('li'); const b = el('button'); b.type = 'button';
+  b.innerHTML = `<span class="num">${i+1}</span><span><span class="t">${s.t}</span><br><span class="k">${s.k}</span></span>`;
+  b.addEventListener('click', () => { stop(); show(i); }); li.appendChild(b); rail.appendChild(li); });
+
+$('#src').textContent = SRC;
+function setOutput(i){
+  const dst = $('#dst');
+  if(i >= 8){ dst.textContent = OUT; }
+  else if(i === 7){ dst.innerHTML = 'A1 đến thăm bà con trong bản.'; }
+  else { dst.innerHTML = '<span class="caret"></span>'; }
+}
+function show(i){
+  clearTimers(); step = i; canvas.innerHTML = '';
+  const s = STEPS[i];
+  $('#stepNo').textContent = `Bước ${i+1} / ${STEPS.length}`;
+  $('#stepTitle').textContent = s.t;
+  $('#tech').textContent = s.tech; $('#why').textContent = s.why;
+  $('#tags').innerHTML = s.tags.map(t => `<span class="tag">${t}</span>`).join('');
+  [...rail.querySelectorAll('button')].forEach((b,k) => { b.toggleAttribute('aria-current', k === i); if(k === i) b.setAttribute('aria-current','step'); b.classList.toggle('done', k < i); });
+  $('#bar').style.width = ((i+1)/STEPS.length*100) + '%';
+  setOutput(i);
+  s.run();
+  if(playing) later(() => { if(step < STEPS.length - 1) show(step + 1); else stop(); }, 6500);
+}
+function stop(){ playing = false; $('#play').textContent = '▶ Chạy'; }
+$('#play').addEventListener('click', () => {
+  if(playing){ stop(); clearTimers(); return; }
+  playing = true; $('#play').textContent = '❚❚ Dừng';
+  show(step === STEPS.length - 1 ? 0 : step);
+});
+$('#prev').addEventListener('click', () => { stop(); show(Math.max(0, step - 1)); });
+$('#next').addEventListener('click', () => { stop(); show(Math.min(STEPS.length - 1, step + 1)); });
+document.addEventListener('keydown', e => { if(e.target.closest('select')) return;
+  if(e.key === 'ArrowRight'){ stop(); show(Math.min(STEPS.length - 1, step + 1)); }
+  if(e.key === 'ArrowLeft'){ stop(); show(Math.max(0, step - 1)); } });
+show(0);
+})();
+</script>
+
+</body></html>
